@@ -49,6 +49,11 @@
             this.btnClearAll = new System.Windows.Forms.Button();
             this.btnSaveData = new System.Windows.Forms.Button();
             this.btnLoadData = new System.Windows.Forms.Button();
+            this.btnExportResults = new System.Windows.Forms.Button();
+            this.btnCPUWorkload = new System.Windows.Forms.Button();
+            this.btnIOWorkload = new System.Windows.Forms.Button();
+            this.btnMixedWorkload = new System.Windows.Forms.Button();
+            this.btnEdgeCases = new System.Windows.Forms.Button();
             this.cmbLoadExample = new System.Windows.Forms.ComboBox();
             this.algorithmButtonPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.resultsPanel = new System.Windows.Forms.Panel();
@@ -60,6 +65,8 @@
             this.btnPriority = new System.Windows.Forms.Button();
             this.btnSJF = new System.Windows.Forms.Button();
             this.btnFCFS = new System.Windows.Forms.Button();
+            this.btnLongestJobFirst = new System.Windows.Forms.Button();
+            this.btnHRRN = new System.Windows.Forms.Button();
             this.txtProcess = new System.Windows.Forms.TextBox();
             this.labelProcess = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
@@ -73,7 +80,7 @@
             this.resultsPanel.SuspendLayout();
             this.aboutPanel.SuspendLayout();
             this.SuspendLayout();
-            // 
+            // btnHRRN
             // panel1
             // 
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -264,6 +271,7 @@
             // 
             this.resultsPanel.BackColor = System.Drawing.SystemColors.Control;
             this.resultsPanel.Controls.Add(this.listView1);
+            this.resultsPanel.Controls.Add(this.btnExportResults);
             this.resultsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.resultsPanel.Location = new System.Drawing.Point(0, 0);
             this.resultsPanel.Name = "resultsPanel";
@@ -421,6 +429,12 @@
             this.algorithmButtonPanel.Controls.Add(this.btnSJF);
             this.algorithmButtonPanel.Controls.Add(this.btnPriority);
             this.algorithmButtonPanel.Controls.Add(this.btnRoundRobin);
+            this.algorithmButtonPanel.Controls.Add(this.btnLongestJobFirst);
+            this.algorithmButtonPanel.Controls.Add(this.btnHRRN);
+            this.algorithmButtonPanel.Controls.Add(this.btnCPUWorkload);
+            this.algorithmButtonPanel.Controls.Add(this.btnIOWorkload);
+            this.algorithmButtonPanel.Controls.Add(this.btnMixedWorkload);
+            this.algorithmButtonPanel.Controls.Add(this.btnEdgeCases);
             this.algorithmButtonPanel.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
             this.algorithmButtonPanel.Location = new System.Drawing.Point(20, 450);
             this.algorithmButtonPanel.Name = "algorithmButtonPanel";
@@ -436,13 +450,45 @@
             this.btnRoundRobin.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
             this.btnRoundRobin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRoundRobin.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnRoundRobin.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            this.btnRoundRobin.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
             this.btnRoundRobin.Name = "btnRoundRobin";
-            this.btnRoundRobin.Size = new System.Drawing.Size(140, 50);
+            this.btnRoundRobin.Size = new System.Drawing.Size(110, 45);
             this.btnRoundRobin.TabIndex = 12;
             this.btnRoundRobin.Text = "ROUND ROBIN";
             this.btnRoundRobin.UseVisualStyleBackColor = false;
             this.btnRoundRobin.Click += new System.EventHandler(this.RoundRobinButton_Click);
+            
+            // btnLongestJobFirst
+            
+            this.btnLongestJobFirst.Enabled = true;
+            this.btnLongestJobFirst.BackColor = System.Drawing.Color.Beige;
+            this.btnLongestJobFirst.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnLongestJobFirst.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnLongestJobFirst.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnLongestJobFirst.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold);
+            this.btnLongestJobFirst.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.btnLongestJobFirst.Name = "btnLongestJobFirst";
+            this.btnLongestJobFirst.Size = new System.Drawing.Size(110, 45);
+            this.btnLongestJobFirst.TabIndex = 20;
+            this.btnLongestJobFirst.Text = "Longest Job First";
+            this.btnLongestJobFirst.UseVisualStyleBackColor = false;
+            this.btnLongestJobFirst.Click += new System.EventHandler(this.LongestJobFirstButton_Click);
+            
+            // btnHRRN
+            //HighestResponseRatioNextButton_Click
+            this.btnHRRN.Enabled = true;
+            this.btnHRRN.BackColor = System.Drawing.Color.Beige;
+            this.btnHRRN.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnHRRN.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnHRRN.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnHRRN.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold);
+            this.btnHRRN.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.btnHRRN.Name = "btnHRRN";
+            this.btnHRRN.Size = new System.Drawing.Size(110, 45);
+            this.btnHRRN.TabIndex = 21;
+            this.btnHRRN.Text = "Highest Response\r\nRatio Next";
+            this.btnHRRN.UseVisualStyleBackColor = false;
+            this.btnHRRN.Click += new System.EventHandler(this.HighestResponseRatioNextButton_Click);
             // 
             // restartApp
             // 
@@ -466,13 +512,14 @@
             this.btnPriority.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
             this.btnPriority.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPriority.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnPriority.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            this.btnPriority.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
             this.btnPriority.Name = "btnPriority";
-            this.btnPriority.Size = new System.Drawing.Size(140, 50);
+            this.btnPriority.Size = new System.Drawing.Size(110, 45);
             this.btnPriority.TabIndex = 10;
             this.btnPriority.Text = "PRIORITY";
             this.btnPriority.UseVisualStyleBackColor = false;
             this.btnPriority.Click += new System.EventHandler(this.PriorityButton_Click);
+    
             // 
             // btnSJF
             // 
@@ -482,9 +529,9 @@
             this.btnSJF.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
             this.btnSJF.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSJF.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSJF.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            this.btnSJF.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
             this.btnSJF.Name = "btnSJF";
-            this.btnSJF.Size = new System.Drawing.Size(140, 50);
+            this.btnSJF.Size = new System.Drawing.Size(110, 45);
             this.btnSJF.TabIndex = 9;
             this.btnSJF.Text = "SJF";
             this.btnSJF.UseVisualStyleBackColor = false;
@@ -498,9 +545,9 @@
             this.btnFCFS.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
             this.btnFCFS.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnFCFS.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnFCFS.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            this.btnFCFS.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
             this.btnFCFS.Name = "btnFCFS";
-            this.btnFCFS.Size = new System.Drawing.Size(140, 50);
+            this.btnFCFS.Size = new System.Drawing.Size(110, 45);
             this.btnFCFS.TabIndex = 8;
             this.btnFCFS.Text = "FCFS";
             this.btnFCFS.UseVisualStyleBackColor = false;
@@ -584,8 +631,103 @@
             this.resultsPanel.ResumeLayout(false);
             this.aboutPanel.ResumeLayout(false);
             this.ResumeLayout(false);
-
+            // btnExportResults
+            this.btnExportResults.BackColor = System.Drawing.Color.FromArgb(52, 152, 219);
+            this.btnExportResults.FlatAppearance.BorderSize = 0;
+            this.btnExportResults.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnExportResults.Font = new System.Drawing.Font(
+                "Segoe UI",
+                10F,
+                System.Drawing.FontStyle.Bold,
+                System.Drawing.GraphicsUnit.Point,
+                ((byte)(0)));
+            this.btnExportResults.ForeColor = System.Drawing.Color.White;
+            this.btnExportResults.Location = new System.Drawing.Point(520, 20);
+            this.btnExportResults.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            this.btnExportResults.Name = "btnExportResults";
+            this.btnExportResults.Size = new System.Drawing.Size(150, 45);
+            this.btnExportResults.TabIndex = 50;
+            this.btnExportResults.Text = "Export Results";
+            this.btnExportResults.UseVisualStyleBackColor = false;
+            this.btnExportResults.Click += new System.EventHandler(this.btnExportResults_Click);
+            //CPU Button
+            this.btnCPUWorkload.Enabled = true;
+            this.btnCPUWorkload.BackColor = System.Drawing.Color.Beige;
+            this.btnCPUWorkload.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnCPUWorkload.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnCPUWorkload.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCPUWorkload.Font = new System.Drawing.Font(
+                "Microsoft Sans Serif",
+                10F,
+                System.Drawing.FontStyle.Bold,
+                System.Drawing.GraphicsUnit.Point,
+                ((byte)(0)));
+            this.btnCPUWorkload.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.btnCPUWorkload.Name = "btnCPUWorkload";
+            this.btnCPUWorkload.Size = new System.Drawing.Size(110, 45);
+            this.btnCPUWorkload.TabIndex = 14;
+            this.btnCPUWorkload.Text = "CPU Bound";
+            this.btnCPUWorkload.UseVisualStyleBackColor = false;
+            this.btnCPUWorkload.Click += new System.EventHandler(this.btnCPUWorkload_Click);
+            //I/O Button
+            this.btnIOWorkload.Enabled = true;
+            this.btnIOWorkload.BackColor = System.Drawing.Color.Beige;
+            this.btnIOWorkload.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnIOWorkload.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnIOWorkload.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnIOWorkload.Font = new System.Drawing.Font(
+                "Microsoft Sans Serif",
+                10F,
+                System.Drawing.FontStyle.Bold,
+                System.Drawing.GraphicsUnit.Point,
+                ((byte)(0)));
+            this.btnIOWorkload.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.btnIOWorkload.Name = "btnIOWorkload";
+            this.btnIOWorkload.Size = new System.Drawing.Size(110, 45);
+            this.btnIOWorkload.TabIndex = 15;
+            this.btnIOWorkload.Text = "I/O Bound";
+            this.btnIOWorkload.UseVisualStyleBackColor = false;
+            this.btnIOWorkload.Click += new System.EventHandler(this.btnIOWorkload_Click);
+            //Mixed workload button
+            this.btnMixedWorkload.Enabled = true;
+            this.btnMixedWorkload.BackColor = System.Drawing.Color.Beige;
+            this.btnMixedWorkload.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnMixedWorkload.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnMixedWorkload.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnMixedWorkload.Font = new System.Drawing.Font(
+                "Microsoft Sans Serif",
+                10F,
+                System.Drawing.FontStyle.Bold,
+                System.Drawing.GraphicsUnit.Point,
+                ((byte)(0)));
+            this.btnMixedWorkload.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.btnMixedWorkload.Name = "btnMixedWorkload";
+            this.btnMixedWorkload.Size = new System.Drawing.Size(110, 45);
+            this.btnMixedWorkload.TabIndex = 16;
+            this.btnMixedWorkload.Text = "Mixed";
+            this.btnMixedWorkload.UseVisualStyleBackColor = false;
+            this.btnMixedWorkload.Click += new System.EventHandler(this.btnMixedWorkload_Click);
+            //Edge Case Button
+            this.btnEdgeCases.Enabled = true;
+            this.btnEdgeCases.BackColor = System.Drawing.Color.Beige;
+            this.btnEdgeCases.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnEdgeCases.FlatAppearance.MouseOverBackColor = System.Drawing.Color.PaleGreen;
+            this.btnEdgeCases.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnEdgeCases.Font = new System.Drawing.Font(
+                "Microsoft Sans Serif",
+                10F,
+                System.Drawing.FontStyle.Bold,
+                System.Drawing.GraphicsUnit.Point,
+                ((byte)(0)));
+            this.btnEdgeCases.Margin = new System.Windows.Forms.Padding(10, 5, 10, 5);
+            this.btnEdgeCases.Name = "btnEdgeCases";
+            this.btnEdgeCases.Size = new System.Drawing.Size(140, 50);
+            this.btnEdgeCases.TabIndex = 17;
+            this.btnEdgeCases.Text = "Edge Cases";
+            this.btnEdgeCases.UseVisualStyleBackColor = false;
+            this.btnEdgeCases.Click += new System.EventHandler(this.btnEdgeCases_Click);
         }
+        
 
         #endregion
 
@@ -622,5 +764,13 @@
         private System.Windows.Forms.ComboBox cmbLoadExample;
         private System.Windows.Forms.FlowLayoutPanel algorithmButtonPanel;
         private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Button btnLongestJobFirst;
+        private System.Windows.Forms.Button btnHRRN;
+        private System.Windows.Forms.Button btnExportResults;
+        private System.Windows.Forms.Button btnCPUWorkload;
+        private System.Windows.Forms.Button btnIOWorkload;
+        private System.Windows.Forms.Button btnMixedWorkload;
+        private System.Windows.Forms.Button btnEdgeCases;
+
     }
 }

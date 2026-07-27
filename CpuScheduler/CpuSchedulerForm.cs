@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
+using System.IO;
 
 namespace CpuScheduler
 {
@@ -13,6 +14,12 @@ namespace CpuScheduler
     /// </summary>
     public partial class CpuSchedulerForm : Form
     {
+        //performance metrics for most recent algorithm run
+        private double lastAverageWaitingTime = 0;
+        private double lastAverageTurnaroundTime = 0;
+        private double lastAverageResponseTime = 0;
+        private double lastCPUUtilization = 0;
+        private string lastAlgorithmName = "";
         private DataTable processTable;
         private Random random = new Random();
         private bool isDarkMode = true; // Default to dark mode
@@ -225,8 +232,12 @@ Instructions:
             public int Priority { get; set; }
             public int ArrivalTime { get; set; }
         }
-
-        /// <summary>
+        //stores metrics from last algorithm executed
+            private double lastAvgWaitingTime;
+            private double lastAvgTurnaroundTime;
+            private double lastAvgResponseTime;
+            private double lastCpuUtilization;
+            private double lastThroughput;        /// <summary>
         /// STUDENTS: Validates process count input with configurable limits
         /// Returns true if valid, false otherwise
         /// </summary>
@@ -461,7 +472,115 @@ Instructions:
             
             return processResults.Values.OrderBy(r => r.StartTime).ToList();
         }
+        //Longest Job First//
+        private List<SchedulingResult> RunLongestJobFirstAlgorithm(List<ProcessData> processes)
+        {
+            var results = new List<SchedulingResult>();
+            var completed = new HashSet<string>();
 
+            int currentTime = 0;
+
+            while (completed.Count < processes.Count)
+            {
+                var available = processes
+                    .Where(p => !completed.Contains(p.ProcessID) &&
+                                p.ArrivalTime <= currentTime)
+                    .OrderByDescending(p => p.BurstTime)
+                    .ThenBy(p => p.ArrivalTime)
+                    .ToList();
+
+                if (available.Count == 0)
+                {
+                    currentTime = processes
+                        .Where(p => !completed.Contains(p.ProcessID))
+                        .Min(p => p.ArrivalTime);
+                    continue;
+                }
+
+                var process = available.First();
+
+                var result = new SchedulingResult
+                {
+                    ProcessID = process.ProcessID,
+                    ArrivalTime = process.ArrivalTime,
+                    BurstTime = process.BurstTime,
+                    StartTime = currentTime
+                };
+
+                currentTime += process.BurstTime;
+
+                result.FinishTime = currentTime;
+                result.TurnaroundTime = result.FinishTime - result.ArrivalTime;
+                result.WaitingTime = result.TurnaroundTime - result.BurstTime;
+
+                completed.Add(process.ProcessID);
+                results.Add(result);
+            }
+
+            return results.OrderBy(r => r.StartTime).ToList();
+        }
+        //Highest Response Ratio Next//
+        private List<SchedulingResult> RunHighestResponseRatioNextAlgorithm(List<ProcessData> processes)
+        {
+            var results = new List<SchedulingResult>();
+            var completed = new HashSet<string>();
+
+            int currentTime = 0;
+
+            while (completed.Count < processes.Count)
+            {
+                var available = processes
+                    .Where(p => !completed.Contains(p.ProcessID) &&
+                                p.ArrivalTime <= currentTime)
+                    .ToList();
+
+                if (available.Count == 0)
+                {
+                    currentTime = processes
+                        .Where(p => !completed.Contains(p.ProcessID))
+                        .Min(p => p.ArrivalTime);
+                    continue;
+                }
+
+                ProcessData selected = null;
+                double bestRatio = -1;
+
+                foreach (var process in available)
+                {
+                    double waiting = currentTime - process.ArrivalTime;
+                    double ratio = (waiting + process.BurstTime) /
+                                (double)process.BurstTime;
+
+                    if (ratio > bestRatio)
+                    {
+                        bestRatio = ratio;
+                        selected = process;
+                    }
+                }
+            
+                var result = new SchedulingResult
+                {
+                    ProcessID = selected.ProcessID,
+                    ArrivalTime = selected.ArrivalTime,
+                    BurstTime = selected.BurstTime,
+                    StartTime = currentTime
+                };
+
+                currentTime += selected.BurstTime;
+
+                result.FinishTime = currentTime;
+                result.TurnaroundTime =
+                    result.FinishTime - result.ArrivalTime;
+                result.WaitingTime =
+                    result.TurnaroundTime - result.BurstTime;
+
+                completed.Add(selected.ProcessID);
+                results.Add(result);
+            }
+
+            return results.OrderBy(r => r.StartTime).ToList();
+        }
+        
         /// <summary>
         /// STUDENTS: Data structure for algorithm results
         /// Use this to store and display scheduling algorithm outcomes
@@ -475,6 +594,7 @@ Instructions:
             public int FinishTime { get; set; }
             public int WaitingTime { get; set; }
             public int TurnaroundTime { get; set; }
+            
         }
 
         /// <summary>
@@ -537,7 +657,69 @@ Instructions:
             // Reference the SaveData_Click() method above to learn CSV file handling
             // This will help you create tables/charts for your project report
         }
-
+        //Metric Calculator//
+        private void CalculateMetrics(List<SchedulingResult> processes)
+        {
+            
+            if (processes == null || processes.Count == 0)
+                return;
+            double totalWaitingTime = 0;
+            double totalTurnaroundTime = 0;
+            double totalBurstTime = 0;
+            double totalResponseTime = 0;
+            int totalFinishTime = 0;
+            foreach (SchedulingResult process in processes)
+            {
+                totalWaitingTime += process.WaitingTime;
+                totalTurnaroundTime += process.TurnaroundTime;
+                totalBurstTime += process.BurstTime;
+                totalResponseTime +=
+                    (process.StartTime - process.ArrivalTime);
+                if (process.FinishTime > totalFinishTime)
+                    totalFinishTime = process.FinishTime;
+            }
+            double avgWaitingTime =
+                totalWaitingTime / processes.Count;
+            double avgTurnaroundTime =
+                totalTurnaroundTime / processes.Count;
+            double avgResponseTime =
+                totalResponseTime / processes.Count;
+            double cpuUtilization = 0;
+            if (totalFinishTime > 0)
+            {
+                cpuUtilization =
+                    (totalBurstTime / totalFinishTime) * 100;
+            }
+            double throughput = 0; //throughput
+            if (totalFinishTime > 0)
+            {
+                throughput =
+                    (double)processes.Count / totalFinishTime;
+            }
+            //save for CSV export
+            lastAvgWaitingTime = avgWaitingTime;
+            lastAvgTurnaroundTime = avgTurnaroundTime;
+            lastAvgResponseTime = avgResponseTime;
+            lastCpuUtilization = cpuUtilization;
+            lastThroughput = throughput;
+            
+            MessageBox.Show( //metric display
+                "Performance Metrics\n\n" +
+                "Average Waiting Time : " +
+                avgWaitingTime.ToString("F2") + "\n\n" +
+                "Average Turnaround Time : " +
+                avgTurnaroundTime.ToString("F2") + "\n\n" +
+                "CPU Utilization : " +
+                cpuUtilization.ToString("F2") + "%\n\n" +
+                "Throughput : " +
+                throughput.ToString("F2") +
+                " processes/unit\n\n" +
+                "Average Response Time : " +
+                avgResponseTime.ToString("F2"),
+                "Scheduling Metrics",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
         /// <summary>
         /// Initializes the process data table structure.
         /// </summary>
@@ -850,7 +1032,7 @@ Instructions:
         /// </summary>
         private void FirstComeFirstServeButton_Click(object sender, EventArgs e)
         {
-            var processData = GetProcessDataFromGrid();
+            var processData = GetProcessDataFromGrid(); //GetProcessDataFromGrid replaced
             if (processData.Count > 0)
             {
                 // STUDENTS: Example implementation using DataGrid data
@@ -858,7 +1040,8 @@ Instructions:
 
                 // Update Results tab with detailed scheduling results
                 DisplaySchedulingResults(results, "FCFS - First Come First Serve");
-                
+                lastAlgorithmName = "First Come First Serve";
+                CalculateMetrics(results);
                 // Switch to Results panel and update sidebar
                 ShowPanel(resultsPanel);
                 sidePanel.Height = btnDashBoard.Height;
@@ -871,7 +1054,116 @@ Instructions:
                 txtProcess.Focus();
             }
         }
+        //CPU Workkload//
+        private List<ProcessData> GenerateCPUBoundWorkload(int count)
+        {
+            List<ProcessData> processes = new List<ProcessData>();
+            for (int i = 0; i < count; i++)
+            {
+                ProcessData process = new ProcessData(); // 80–100
+                process.ProcessID = "P" + (i + 1);
+                process.ArrivalTime = i;
+                process.BurstTime = 80 + (i % 21);
+                process.Priority = (i % 5) + 1;
+                processes.Add(process);
+            }
+            return processes;
+        }
+        //IO Workload//
+        private List<ProcessData> GenerateIOBoundWorkload(int count)
+        {
+            List<ProcessData> processes = new List<ProcessData>();
+            for (int i = 0; i < count; i++)
+            {
+                ProcessData process = new ProcessData(); //1-5
+                process.ProcessID = "P" + (i + 1);
+                process.ArrivalTime = i;
+                process.BurstTime = 1 + (i % 5);      
+                process.Priority = (i % 5) + 1;
+                processes.Add(process);
+            }
 
+            return processes;
+        }
+        //Mixed Workload//
+        private List<ProcessData> GenerateMixedWorkload(int count)
+        {
+            List<ProcessData> processes = new List<ProcessData>();
+            for (int i = 0; i < count; i++)
+            {
+                ProcessData process = new ProcessData();
+                process.ProcessID = "P" + (i + 1);
+                process.ArrivalTime = i;
+                process.Priority = (i % 5) + 1;
+                if (i % 2 == 0)
+                    process.BurstTime = 3 + (i % 5);
+                else
+                    process.BurstTime = 70 + (i % 30);
+                processes.Add(process);
+            }
+            return processes;
+        }
+        //EdgeCases//
+        private List<ProcessData> GenerateAllArrivalZero(int count) //time 0 test
+        {
+            List<ProcessData> processes = new List<ProcessData>(); 
+            for (int i = 0; i < count; i++)
+            {
+                processes.Add(new ProcessData
+                {
+                    ProcessID = "P" + (i + 1),
+                    ArrivalTime = 0,
+                    BurstTime = 5 + i,
+                    Priority = 1
+                });
+            }
+            return processes;
+        }
+        private List<ProcessData> GenerateEqualBurstTimes(int count) //bust times test
+        {
+            List<ProcessData> processes = new List<ProcessData>();
+            for (int i = 0; i < count; i++)
+            {
+                processes.Add(new ProcessData
+                {
+                    ProcessID = "P" + (i + 1),
+                    ArrivalTime = i,
+                    BurstTime = 10,
+                    Priority = (i % 5) + 1
+                });
+            }
+            return processes;
+        }
+        private List<ProcessData> GenerateExtremeBurstTimes(int count) //long burst test
+        {
+            List<ProcessData> processes = new List<ProcessData>();
+            for (int i = 0; i < count; i++)
+            {
+                processes.Add(new ProcessData
+                {
+                    ProcessID = "P" + (i + 1),
+                    ArrivalTime = i,
+                    BurstTime = (i % 2 == 0) ? 1 : 120,
+                    Priority = (i % 5) + 1
+                });
+            }
+            return processes;
+        }
+        private List<ProcessData> GeneratePriorityInversion(int count) //inversion test
+        {
+            List<ProcessData> processes = new List<ProcessData>();
+            for (int i = 0; i < count; i++)
+            {
+                processes.Add(new ProcessData
+                {
+                    ProcessID = "P" + (i + 1),
+                    ArrivalTime = i,
+                    BurstTime = 20,
+                    Priority = (i == 0) ? 5 : 1
+                });
+            }
+            return processes;
+        }
         /// <summary>
         /// Executes the Shortest Job First algorithm using DataGrid data.
         /// STUDENTS: Updated to use GetProcessDataFromGrid() instead of prompts
@@ -879,7 +1171,7 @@ Instructions:
         /// </summary>
         private void ShortestJobFirstButton_Click(object sender, EventArgs e)
         {
-            var processData = GetProcessDataFromGrid();
+            var processData = GetProcessDataFromGrid(); //GetProcessDataFromGrid
             if (processData.Count > 0)
             {
                 // STUDENTS: Updated implementation using DataGrid data
@@ -887,7 +1179,8 @@ Instructions:
 
                 // Update Results tab with detailed scheduling results
                 DisplaySchedulingResults(results, "SJF - Shortest Job First");
-                
+                lastAlgorithmName = "Shortest Job First";
+                CalculateMetrics(results);
                 // Switch to Results panel and update sidebar
                 ShowPanel(resultsPanel);
                 sidePanel.Height = btnDashBoard.Height;
@@ -908,7 +1201,7 @@ Instructions:
         /// </summary>
         private void PriorityButton_Click(object sender, EventArgs e)
         {
-            var processData = GetProcessDataFromGrid();
+            var processData = GetProcessDataFromGrid(); //GetProcessDataFromGrid
             if (processData.Count > 0)
             {
                 // STUDENTS: Updated implementation using DataGrid data
@@ -916,7 +1209,8 @@ Instructions:
 
                 // Update Results tab with detailed scheduling results
                 DisplaySchedulingResults(results, "Priority Scheduling (Higher # = Higher Priority)");
-                
+                lastAlgorithmName = "Priority";
+                CalculateMetrics(results);
                 // Switch to Results panel and update sidebar
                 ShowPanel(resultsPanel);
                 sidePanel.Height = btnDashBoard.Height;
@@ -1257,7 +1551,7 @@ Instructions:
         /// </summary>
         private void RoundRobinButton_Click(object sender, EventArgs e)
         {
-            var processData = GetProcessDataFromGrid();
+            var processData = GetProcessDataFromGrid(); //GetProcessDataFromGrid replaced
             if (processData.Count > 0)
             {
                 // Prompt for quantum time - this is algorithm-specific parameter
@@ -1273,7 +1567,8 @@ Instructions:
 
                     // Update Results tab with detailed scheduling results
                     DisplaySchedulingResults(results, $"Round Robin (Quantum = {quantumTime})");
-                    
+                    lastAlgorithmName = "Round Robin";
+                    CalculateMetrics(results);
                     // Switch to Results panel and update sidebar
                     ShowPanel(resultsPanel);
                     sidePanel.Height = btnDashBoard.Height;
@@ -1292,7 +1587,168 @@ Instructions:
                 txtProcess.Focus();
             }
         }
+        //Longestjobfirst//
+        private void LongestJobFirstButton_Click(object sender, EventArgs e)
+        {
+            var processData = GetProcessDataFromGrid(); //GetProcessDataFromGrid replaced to test
 
+            if (processData.Count > 0)
+            {
+                var results = RunLongestJobFirstAlgorithm(processData);
+
+                DisplaySchedulingResults(results, "Longest Job First");
+                lastAlgorithmName = "Longest Job First";
+                CalculateMetrics(results);
+                // Switch to Results panel and update sidebar
+                ShowPanel(resultsPanel);
+                sidePanel.Height = btnDashBoard.Height;
+                sidePanel.Top = btnDashBoard.Top;
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Please set process count and ensure the data grid has process data.",
+                    "No Process Data",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                txtProcess.Focus();
+            }
+        }
+        //Highest response ratio//
+        private void HighestResponseRatioNextButton_Click(object sender, EventArgs e)
+        {
+            var processData = GetProcessDataFromGrid(); //GetProcessDataFromGrid test
+
+            if (processData.Count > 0)
+            {
+                var results = RunHighestResponseRatioNextAlgorithm(processData);
+
+                DisplaySchedulingResults(results, "Highest Response Ratio Next");
+                lastAlgorithmName = "Highest Response Ratio";
+                CalculateMetrics(results);
+                // Switch to Results panel and update sidebar
+                ShowPanel(resultsPanel);
+                sidePanel.Height = btnDashBoard.Height;
+                sidePanel.Top = btnDashBoard.Top;
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Please set process count and ensure the data grid has process data.",
+                    "No Process Data",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                txtProcess.Focus();
+            }
+        }
+        private void PopulateGrid(List<ProcessData> processes)
+        {
+            processTable.Rows.Clear();
+            foreach (ProcessData process in processes)
+            {
+                processTable.Rows.Add(
+                    process.ProcessID,
+                    process.ArrivalTime,
+                    process.BurstTime,
+                    process.Priority);
+            }
+                txtProcess.Text = processes.Count.ToString();
+        }
+        private void btnExportResults_Click(object sender, EventArgs e)
+        {
+
+                if (listView1.Items.Count == 0)
+                {
+                    MessageBox.Show("No results to export.");
+                    return;
+                }
+
+                SaveFileDialog saveFile = new SaveFileDialog();
+
+                saveFile.Filter = "CSV Files (*.csv)|*.csv";
+                saveFile.FileName = "SchedulingResults.csv";
+
+                if (saveFile.ShowDialog() != DialogResult.OK)
+                    return;
+
+                // <-- PLACE THE CODE BELOW INSIDE THIS BLOCK
+                using (StreamWriter writer = new StreamWriter(saveFile.FileName))
+                {
+                    // Algorithm Name
+                    writer.WriteLine("Algorithm," + lastAlgorithmName);
+                    writer.WriteLine();
+
+                    // Column Headers
+                    for (int i = 0; i < listView1.Columns.Count; i++)
+                    {
+                        writer.Write(listView1.Columns[i].Text);
+
+                        if (i < listView1.Columns.Count - 1)
+                            writer.Write(",");
+                    }
+
+                    writer.WriteLine();
+
+                    // Individual Process Results
+                    foreach (ListViewItem item in listView1.Items)
+                    {
+                        for (int i = 0; i < item.SubItems.Count; i++)
+                        {
+                            writer.Write(item.SubItems[i].Text);
+
+                            if (i < item.SubItems.Count - 1)
+                                writer.Write(",");
+                        }
+
+                        writer.WriteLine();
+                    }
+
+                    // Blank line before summary
+                    writer.WriteLine();
+                    writer.WriteLine("Performance Metrics");
+                    writer.WriteLine();
+
+                    // <-- THESE LINES GO HERE
+                    writer.WriteLine("Average Waiting Time," +
+                        lastAvgWaitingTime.ToString("F2"));
+
+                    writer.WriteLine("Average Turnaround Time," +
+                        lastAvgTurnaroundTime.ToString("F2"));
+
+                    writer.WriteLine("Average Response Time," +
+                        lastAvgResponseTime.ToString("F2"));
+
+                    writer.WriteLine("CPU Utilization (%)," +
+                        lastCpuUtilization.ToString("F2"));
+
+                    writer.WriteLine("Throughput," +
+                        lastThroughput.ToString("F2"));
+                }
+
+                MessageBox.Show("Results exported successfully.");
+            }
+            //wrkload buttons
+        private void btnCPUWorkload_Click(object sender, EventArgs e)
+        {
+            PopulateGrid(GenerateCPUBoundWorkload(100));
+        }
+
+        private void btnIOWorkload_Click(object sender, EventArgs e)
+        {
+            PopulateGrid(GenerateIOBoundWorkload(100));
+        }
+
+        private void btnMixedWorkload_Click(object sender, EventArgs e)
+        {
+            PopulateGrid(GenerateMixedWorkload(100));
+        }
+
+        private void btnEdgeCases_Click(object sender, EventArgs e)
+        {
+            PopulateGrid(GenerateExtremeBurstTimes(100));
+        }
 
     }
 
